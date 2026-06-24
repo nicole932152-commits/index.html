@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NUVA Beauty CRM</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{
+    --cream:#FAF7F2;
+    --blue:#A9D6FF;
+    --blue-dark:#5aaee8;
+    --blue-light:#E8F4FF;
+    --card:#fff;
+    --text:#2a2a2a;
+    --muted:#888;
+    --border:#f0ecec;
+    --shadow:0 2px 18px rgba(169,214,255,0.13);
+    --radius:18px;
+    --nav-h:68px;
+  }
+  html,body{height:100%;background:var(--cream);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text)}
+  body{padding-bottom:calc(var(--nav-h) + 20px)}
+
+  /* ── HEADER ── */
+  .app-header{
+    background:linear-gradient(135deg,#c9e8ff 0%,#e8f4ff 60%,#faf7f2 100%);
+    padding:52px 20px 22px;
+    text-align:center;
+    border-radius:0 0 28px 28px;
+    box-shadow:0 4px 24px rgba(169,214,255,0.22);
+    margin-bottom:18px;
+    position:relative;
+  }
+  .app-header .logo-ring{
+    width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(135deg,#A9D6FF,#7cbff5);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 10px;
+    box-shadow:0 4px 16px rgba(92,168,230,0.35);
+    font-size:26px;
+  }
+  .app-header h1{font-size:22px;font-weight:700;color:#2c5aa0;letter-spacing:1px}
+  .app-header p{font-size:12px;color:#7aabd4;margin-top:2px}
+  .line-btn{
+    position:absolute;top:16px;right:16px;
+    background:#06C755;color:#fff;border:none;
+    border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(6,199,85,0.3);
+  }
+
+  /* ── NAV ── */
+  .bottom-nav{
+    position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);
+    background:#fff;border-top:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-around;
+    z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,0.07);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .nav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;padding:8px 0;cursor:pointer;border:none;background:none;
+    color:var(--muted);font-size:10px;font-weight:500;transition:color .2s;
+  }
+  .nav-item .icon{font-size:22px;transition:transform .15s}
+  .nav-item.active{color:var(--blue-dark)}
+  .nav-item.active .icon{transform:scale(1.15)}
+
+  /* ── PAGES ── */
+  .page{display:none;animation:fadeUp .3s ease both}
+  .page.active{display:block}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .container{padding:0 16px;max-width:768px;margin:0 auto}
+
+  /* ── CARDS ── */
+  .card{background:var(--card);border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card-title{font-size:15px;font-weight:700;color:#2c5aa0;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+
+  /* ── STATS ── */
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .stat-card{
+    background:var(--card);border-radius:var(--radius);padding:16px;
+    box-shadow:var(--shadow);border:1px solid var(--border);text-align:center;
+  }
+  .stat-card .s-label{font-size:11px;color:var(--muted);margin-bottom:5px}
+  .stat-card .s-value{font-size:22px;font-weight:800;color:var(--blue-dark);line-height:1}
+  .stat-card .s-unit{font-size:11px;color:var(--muted)}
+  .stat-card.full{grid-column:1/-1}
+  .stat-card.accent{background:linear-gradient(135deg,#A9D6FF,#7cbff5)}
+  .stat-card.accent .s-label,.stat-card.accent .s-value,.stat-card.accent .s-unit{color:#fff}
+
+  /* ── FORMS ── */
+  .form-group{margin-bottom:13px}
+  .form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+  .fc{
+    width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;
+    font-size:15px;background:#fafafa;color:var(--text);appearance:none;
+    transition:border-color .2s,background .2s;
+  }
+  .fc:focus{outline:none;border-color:var(--blue);background:#fff}
+  select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%23aaa'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+
+  /* ── BUTTONS ── */
+  .btn{padding:12px 22px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s}
+  .btn-primary{background:linear-gradient(135deg,#A9D6FF,#7cbff5);color:#fff;box-shadow:0 3px 12px rgba(92,168,230,0.3)}
+  .btn-primary:active{transform:scale(.97)}
+  .btn-danger{background:#ff7676;color:#fff}
+  .btn-sm{padding:7px 14px;font-size:13px;border-radius:9px}
+  .btn-outline{background:transparent;border:1.5px solid var(--blue);color:var(--blue-dark)}
+  .btn-full{width:100%}
+
+  /* ── FAB ── */
+  .fab{
+    position:fixed;bottom:calc(var(--nav-h) + 16px);right:20px;
+    width:54px;height:54px;border-radius:50%;
+    background:linear-gradient(135deg,#A9D6FF,#5aaee8);
+    color:#fff;font-size:26px;border:none;cursor:pointer;
+    box-shadow:0 4px 18px rgba(92,168,230,0.45);
+    display:flex;align-items:center;justify-content:center;
+    z-index:90;transition:transform .15s;
+  }
+  .fab:active{transform:scale(.93)}
+
+  /* ── LIST ITEMS ── */
+  .list-item{
+    display:flex;align-items:center;gap:12px;padding:14px;
+    background:#fff;border-radius:14px;margin-bottom:10px;
+    box-shadow:0 1px 10px rgba(0,0,0,0.06);border:1px solid var(--border);
+    transition:box-shadow .15s;
+  }
+  .list-item:active{box-shadow:0 2px 16px rgba(169,214,255,0.3)}
+  .list-avatar{
+    width:44px;height:44px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,#c9e8ff,#7cbff5);
+    display:flex;align-items:center;justify-content:center;font-size:19px;
+  }
+  .list-body{flex:1;min-width:0}
+  .list-name{font-size:15px;font-weight:700;color:var(--text)}
+  .list-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .list-actions{display:flex;gap:6px;flex-shrink:0}
+
+  /* ── BADGE ── */
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+  .badge-blue{background:#e8f4ff;color:#2c7ed6}
+  .badge-green{background:#e6faf0;color:#1a9e6a}
+  .badge-red{background:#fff0f0;color:#d63b3b}
+  .badge-gray{background:#f0f0f0;color:#888}
+
+  /* ── SEARCH ── */
+  .search-bar{position:relative;margin-bottom:14px}
+  .search-bar .fc{padding-left:38px}
+  .search-bar::before{content:"🔍";position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none}
+
+  /* ── MODAL ── */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);
+    z-index:200;align-items:flex-end;justify-content:center;
+    backdrop-filter:blur(3px);
+  }
+  .modal-overlay.open{display:flex;animation:fadeOverlay .2s ease}
+  @keyframes fadeOverlay{from{opacity:0}to{opacity:1}}
+  .modal-sheet{
+    background:#fff;border-radius:28px 28px 0 0;padding:28px 20px 40px;
+    width:100%;max-width:768px;max-height:88vh;overflow-y:auto;
+    animation:slideUp .28s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .modal-handle{width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 18px}
+  .modal-title{font-size:18px;font-weight:800;color:#2c5aa0;margin-bottom:18px}
+  .modal-footer{display:flex;gap:10px;margin-top:18px}
+
+  /* ── CHART ── */
+  .chart-wrap{padding:8px 0;position:relative;height:200px}
+
+  /* ── EMPTY ── */
+  .empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+  .empty-state .emoji{font-size:48px;display:block;margin-bottom:10px}
+  .empty-state p{font-size:14px}
+
+  /* ── SECTION HEADER ── */
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .section-title{font-size:16px;font-weight:800;color:#2c5aa0}
+
+  /* ── DATE PILL ── */
+  .date-pill{background:var(--blue-light);color:var(--blue-dark);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
+
+  /* ── TOAST ── */
+  #toast{
+    position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);
+    background:#2c5aa0;color:#fff;border-radius:20px;padding:10px 22px;font-size:14px;
+    z-index:999;transition:transform .3s ease;pointer-events:none;white-space:nowrap;
+  }
+  #toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* ── EXPORT BTN ── */
+  .export-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+
+  .detail-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)}
+  .detail-row:last-child{border:none}
+  .detail-row .dk{font-size:13px;color:var(--muted)}
+  .detail-row .dv{font-size:13px;font-weight:600;color:var(--text)}
+
+  /* ── PROFIT HIGHLIGHT ── */
+  .profit-bar{
+    background:linear-gradient(135deg,#d4f0ff,#e8f4ff);
+    border-radius:16px;padding:16px;margin-bottom:14px;
+    border:1.5px solid #c2e4ff;
+  }
+  .profit-bar .p-label{font-size:12px;color:#5a95c8;font-weight:600;margin-bottom:4px}
+  .profit-bar .p-val{font-size:30px;font-weight:900;color:#1a6fbb}
+  .profit-bar .p-sub{font-size:12px;color:#7aabd4;margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <button class="line-btn" onclick="window.open('https://lin.ee/P0COEmD','_blank')">
+    <span>💬</span> LINE 官方帳號
+  </button>
+  <div class="logo-ring">🌸</div>
+  <h1>NUVA Beauty</h1>
+  <p>Beauty CRM 管理系統</p>
+</div>
+
+<!-- Pages -->
+<div id="page-dashboard" class="page active">
+  <div class="container">
+    <div class="profit-bar">
+      <div class="p-label">📊 本月淨利</div>
+      <div class="p-val" id="dash-net">$0</div>
+      <div class="p-sub">營收 - 支出</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="s-label">今日營收</div><div class="s-value" id="dash-today">$0</div></div>
+      <div class="stat-card"><div class="s-label">本月營收</div><div class="s-value" id="dash-month">$0</div></div>
+      <div class="stat-card"><div class="s-label">總營收</div><div class="s-value" id="dash-total">$0</div></div>
+      <div class="stat-card"><div class="s-label">總支出</div><div class="s-value" id="dash-expense">$0</div></div>
+      <div class="stat-card full"><div class="s-label">今日預約數</div><div class="s-value" id="dash-appts">0</div><div class="s-unit">筆預約</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📈 近7日營收</div>
+      <div class="chart-wrap"><canvas id="chart-week"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📅 今日預約</div>
+      <div id="today-appt-list"><div class="empty-state"><span class="emoji">📋</span><p>今日尚無預約</p></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-customers" class="page">
+  <div class="container">
+    <div class="export-row">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV('customers')">⬇ 匯出CSV</button>
+    </div>
+    <div class="search-bar"><input class="fc" id="cust-search" placeholder="搜尋客戶姓名、電話…" oninput="renderCustomers()"></div>
+    <div id="cust-list"></div>
+  </div>
+</div>
+
+<div id="page-appointments" class="page">
+  <div class="container">
+    <div class="export-row">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV('appointments')">⬇ 匯出CSV</button>
+    </div>
+    <div class="search-bar"><input class="fc" id="appt-search" placeholder="搜尋客戶、服務…" oninput="renderAppointments()"></div>
+    <div id="appt-list"></div>
+  </div>
+</div>
+
+<div id="page-payments" class="page">
+  <div class="container">
+    <div class="export-row">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV('payments')">⬇ 匯出CSV</button>
+    </div>
+    <div class="search-bar"><input class="fc" id="pay-search" placeholder="搜尋客戶、服務…" oninput="renderPayments()"></div>
+    <div id="pay-list"></div>
+  </div>
+</div>
+
+<div id="page-expenses" class="page">
+  <div class="container">
+    <div class="export-row">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV('expenses')">⬇ 匯出CSV</button>
+    </div>
+    <div class="search-bar"><input class="fc" id="exp-search" placeholder="搜尋類別、備註…" oninput="renderExpenses()"></div>
+    <div id="exp-list"></div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="nav('dashboard',this)"><span class="icon">🏠</span>總覽</button>
+  <button class="nav-item" onclick="nav('customers',this)"><span class="icon">👤</span>客戶</button>
+  <button class="nav-item" onclick="nav('appointments',this)"><span class="icon">📅</span>預約</button>
+  <button class="nav-item" onclick="nav('payments',this)"><span class="icon">💳</span>收款</button>
+  <button class="nav-item" onclick="nav('expenses',this)"><span class="icon">💸</span>支出</button>
+</nav>
+
+<button class="fab" id="fab-btn" onclick="openAddModal()">＋</button>
+<div id="toast"></div>
+
+<!-- ══ MODALS ══ -->
+
+<!-- Customer Modal -->
+<div class="modal-overlay" id="modal-customer">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="cust-modal-title">新增客戶</div>
+    <input type="hidden" id="cust-id">
+    <div class="form-group"><label>姓名 *</label><input class="fc" id="cust-name" placeholder="客戶姓名"></div>
+    <div class="form-group"><label>電話</label><input class="fc" id="cust-phone" type="tel" placeholder="0912-345-678"></div>
+    <div class="form-group"><label>LINE ID</label><input class="fc" id="cust-line" placeholder="LINE ID 或連結"></div>
+    <div class="form-group"><label>生日</label><input class="fc" id="cust-birthday" type="date"></div>
+    <div class="form-group"><label>備註</label><textarea class="fc" id="cust-note" rows="3" placeholder="膚質、特別需求…"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-full" onclick="closeModal('modal-customer')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="saveCustomer()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Customer Detail Modal -->
+<div class="modal-overlay" id="modal-cust-detail">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👤 客戶資料</div>
+    <div id="cust-detail-body"></div>
+    <div style="margin-top:16px">
+      <div class="card-title" style="font-size:14px;margin-bottom:10px">💰 消費紀錄</div>
+      <div id="cust-detail-payments"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-full" onclick="closeModal('modal-cust-detail')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- Appointment Modal -->
+<div class="modal-overlay" id="modal-appointment">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="appt-modal-title">新增預約</div>
+    <input type="hidden" id="appt-id">
+    <div class="form-group"><label>日期 *</label><input class="fc" id="appt-date" type="date"></div>
+    <div class="form-group"><label>時間 *</label><input class="fc" id="appt-time" type="time"></div>
+    <div class="form-group"><label>客戶名稱 *</label>
+      <input class="fc" id="appt-cust" list="cust-datalist" placeholder="輸入或選擇客戶">
+      <datalist id="cust-datalist"></datalist>
+    </div>
+    <div class="form-group"><label>服務項目 *</label>
+      <select class="fc" id="appt-service">
+        <option value="">請選擇</option>
+        <option>韓式深層水飛梭 $899</option>
+        <option>基本毛孔清潔管理 $999</option>
+        <option>逆齡緊緻抗老管理 $999</option>
+        <option>深層痘痘修復護理 $999</option>
+        <option>亮白透光美肌護理 $999</option>
+        <option>水潤保濕肌膚管理 $999</option>
+      </select>
+    </div>
+    <div class="form-group"><label>預約狀態</label>
+      <select class="fc" id="appt-status">
+        <option value="已預約">已預約</option>
+        <option value="已完成">已完成</option>
+        <option value="已取消">已取消</option>
+      </select>
+    </div>
+    <div class="form-group"><label>備註</label><input class="fc" id="appt-note" placeholder="特別需求…"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-full" onclick="closeModal('modal-appointment')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="saveAppointment()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="modal-payment">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增收款</div>
+    <div class="form-group"><label>日期 *</label><input class="fc" id="pay-date" type="date"></div>
+    <div class="form-group"><label>客戶名稱 *</label>
+      <input class="fc" id="pay-cust" list="cust-datalist2" placeholder="輸入或選擇客戶">
+      <datalist id="cust-datalist2"></datalist>
+    </div>
+    <div class="form-group"><label>服務項目 *</label>
+      <select class="fc" id="pay-service" onchange="autoFillPrice()">
+        <option value="">請選擇</option>
+        <option data-price="899">韓式深層水飛梭 $899</option>
+        <option data-price="999">基本毛孔清潔管理 $999</option>
+        <option data-price="999">逆齡緊緻抗老管理 $999</option>
+        <option data-price="999">深層痘痘修復護理 $999</option>
+        <option data-price="999">亮白透光美肌護理 $999</option>
+        <option data-price="999">水潤保濕肌膚管理 $999</option>
+      </select>
+    </div>
+    <div class="form-group"><label>金額 *</label><input class="fc" id="pay-amount" type="number" placeholder="自動帶入或手動輸入"></div>
+    <div class="form-group"><label>備註</label><input class="fc" id="pay-note" placeholder="備註…"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-full" onclick="closeModal('modal-payment')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="savePayment()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Expense Modal -->
+<div class="modal-overlay" id="modal-expense">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增支出</div>
+    <div class="form-group"><label>日期 *</label><input class="fc" id="exp-date" type="date"></div>
+    <div class="form-group"><label>類別</label>
+      <select class="fc" id="exp-cat">
+        <option>材料</option>
+        <option>房租</option>
+        <option>廣告</option>
+        <option>其他</option>
+      </select>
+    </div>
+    <div class="form-group"><label>金額 *</label><input class="fc" id="exp-amount" type="number" placeholder="金額"></div>
+    <div class="form-group"><label>備註</label><input class="fc" id="exp-note" placeholder="備註…"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-full" onclick="closeModal('modal-expense')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="saveExpense()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  DATA LAYER
+// ═══════════════════════════════════════
+const load = k => JSON.parse(localStorage.getItem(k)||'[]');
+const save = (k,v) => localStorage.setItem(k,JSON.stringify(v));
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const today = () => new Date().toISOString().slice(0,10);
+const fmtMoney = n => '$'+Number(n||0).toLocaleString();
+const thisMonth = () => new Date().toISOString().slice(0,7);
+
+let customers    = load('nuva_customers');
+let appointments = load('nuva_appointments');
+let payments     = load('nuva_payments');
+let expenses     = load('nuva_expenses');
+
+const saveAll = () => {
+  save('nuva_customers',customers);
+  save('nuva_appointments',appointments);
+  save('nuva_payments',payments);
+  save('nuva_expenses',expenses);
+};
+
+// ═══════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════
+let currentPage = 'dashboard';
+function nav(page, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  el.classList.add('active');
+  currentPage = page;
+  if(page==='dashboard') renderDashboard();
+  if(page==='customers') renderCustomers();
+  if(page==='appointments') renderAppointments();
+  if(page==='payments') renderPayments();
+  if(page==='expenses') renderExpenses();
+}
+
+// ═══════════════════════════════════════
+//  FAB
+// ═══════════════════════════════════════
+function openAddModal(){
+  const map = {
+    dashboard:'modal-customer',
+    customers:'modal-customer',
+    appointments:'modal-appointment',
+    payments:'modal-payment',
+    expenses:'modal-expense'
+  };
+  const m = map[currentPage]||'modal-customer';
+  if(m==='modal-customer') openCustomerModal();
+  else if(m==='modal-appointment') openAppointmentModal();
+  else if(m==='modal-payment') openPaymentModal();
+  else if(m==='modal-expense') openExpenseModal();
+}
+
+// ═══════════════════════════════════════
+//  MODAL HELPERS
+// ═══════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open') }
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open') });
+});
+
+// ═══════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ═══════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════
+let weekChart;
+function renderDashboard(){
+  const td = today(), tm = thisMonth();
+  const todayPay   = payments.filter(p=>p.date===td).reduce((s,p)=>s+Number(p.amount),0);
+  const monthPay   = payments.filter(p=>p.date.startsWith(tm)).reduce((s,p)=>s+Number(p.amount),0);
+  const totalPay   = payments.reduce((s,p)=>s+Number(p.amount),0);
+  const totalExp   = expenses.reduce((s,e)=>s+Number(e.amount),0);
+  const monthExp   = expenses.filter(e=>e.date.startsWith(tm)).reduce((s,e)=>s+Number(e.amount),0);
+  const net        = monthPay - monthExp;
+  const todayAppts = appointments.filter(a=>a.date===td && a.status!=='已取消').length;
+
+  document.getElementById('dash-today').textContent   = fmtMoney(todayPay);
+  document.getElementById('dash-month').textContent   = fmtMoney(monthPay);
+  document.getElementById('dash-total').textContent   = fmtMoney(totalPay);
+  document.getElementById('dash-expense').textContent = fmtMoney(totalExp);
+  document.getElementById('dash-net').textContent     = fmtMoney(net);
+  document.getElementById('dash-appts').textContent   = todayAppts;
+
+  // Today appointments
+  const list = appointments.filter(a=>a.date===td).sort((a,b)=>a.time.localeCompare(b.time));
+  const el = document.getElementById('today-appt-list');
+  if(!list.length){el.innerHTML='<div class="empty-state"><span class="emoji">📋</span><p>今日尚無預約</p></div>';return;}
+  el.innerHTML = list.map(a=>`
+    <div class="list-item">
+      <div class="list-avatar">🌸</div>
+      <div class="list-body">
+        <div class="list-name">${a.customer}</div>
+        <div class="list-sub">${a.time} · ${a.service}</div>
+      </div>
+      <span class="badge ${statusBadge(a.status)}">${a.status}</span>
+    </div>`).join('');
+
+  // Week chart
+  const labels=[], data=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const key=d.toISOString().slice(0,10);
+    labels.push(key.slice(5));
+    data.push(payments.filter(p=>p.date===key).reduce((s,p)=>s+Number(p.amount),0));
+  }
+  const ctx=document.getElementById('chart-week').getContext('2d');
+  if(weekChart) weekChart.destroy();
+  weekChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'營收',
+        data,
+        backgroundColor:'rgba(169,214,255,0.55)',
+        borderColor:'#7cbff5',
+        borderWidth:2,
+        borderRadius:8,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{beginAtZero:true,grid:{color:'#f0f0f0'},ticks:{callback:v=>'$'+v}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════
+//  CUSTOMERS
+// ═══════════════════════════════════════
+function openCustomerModal(id){
+  document.getElementById('cust-modal-title').textContent = id ? '編輯客戶' : '新增客戶';
+  ['cust-id','cust-name','cust-phone','cust-line','cust-birthday','cust-note'].forEach(f=>document.getElementById(f).value='');
+  if(id){
+    const c=customers.find(x=>x.id===id);
+    if(!c) return;
+    document.getElementById('cust-id').value=c.id;
+    document.getElementById('cust-name').value=c.name;
+    document.getElementById('cust-phone').value=c.phone||'';
+    document.getElementById('cust-line').value=c.line||'';
+    document.getElementById('cust-birthday').value=c.birthday||'';
+    document.getElementById('cust-note').value=c.note||'';
+  }
+  openModal('modal-customer');
+}
+function saveCustomer(){
+  const name=document.getElementById('cust-name').value.trim();
+  if(!name){toast('請輸入客戶姓名');return;}
+  const id=document.getElementById('cust-id').value;
+  const obj={
+    id:id||uid(),name,
+    phone:document.getElementById('cust-phone').value,
+    line:document.getElementById('cust-line').value,
+    birthday:document.getElementById('cust-birthday').value,
+    note:document.getElementById('cust-note').value,
+    created:id?(customers.find(c=>c.id===id)||{}).created||today():today()
+  };
+  if(id) customers=customers.map(c=>c.id===id?obj:c);
+  else customers.push(obj);
+  saveAll(); closeModal('modal-customer'); renderCustomers(); updateDataLists();
+  toast(id?'✅ 客戶資料已更新':'✅ 客戶新增成功');
+}
+function deleteCustomer(id){
+  if(!confirm('確定刪除此客戶？')) return;
+  customers=customers.filter(c=>c.id!==id);
+  saveAll(); renderCustomers(); toast('🗑 已刪除');
+}
+function showCustDetail(id){
+  const c=customers.find(x=>x.id===id); if(!c) return;
+  document.getElementById('cust-detail-body').innerHTML=`
+    <div class="detail-row"><span class="dk">姓名</span><span class="dv">${c.name}</span></div>
+    <div class="detail-row"><span class="dk">電話</span><span class="dv">${c.phone||'—'}</span></div>
+    <div class="detail-row"><span class="dk">LINE</span><span class="dv">${c.line||'—'}</span></div>
+    <div class="detail-row"><span class="dk">生日</span><span class="dv">${c.birthday||'—'}</span></div>
+    <div class="detail-row"><span class="dk">備註</span><span class="dv">${c.note||'—'}</span></div>`;
+  const pays=payments.filter(p=>p.customer===c.name);
+  document.getElementById('cust-detail-payments').innerHTML = pays.length
+    ? pays.map(p=>`<div class="list-item" style="padding:10px 12px">
+        <div class="list-body"><div class="list-name">${p.service}</div><div class="list-sub">${p.date}</div></div>
+        <div style="font-weight:700;color:#2c7ed6">${fmtMoney(p.amount)}</div></div>`).join('')
+    : '<div class="empty-state" style="padding:16px"><p>尚無消費紀錄</p></div>';
+  openModal('modal-cust-detail');
+}
+function renderCustomers(){
+  const q=(document.getElementById('cust-search')||{}).value?.toLowerCase()||'';
+  const list=customers.filter(c=>
+    c.name.toLowerCase().includes(q)||
+    (c.phone||'').includes(q)||
+    (c.line||'').toLowerCase().includes(q)
+  ).sort((a,b)=>a.name.localeCompare(b.name,'zh'));
+  const el=document.getElementById('cust-list');
+  if(!list.length){el.innerHTML='<div class="empty-state"><span class="emoji">👤</span><p>尚無客戶資料<br>點擊 + 新增第一位客戶</p></div>';return;}
+  el.innerHTML=list.map(c=>`
+    <div class="list-item" onclick="showCustDetail('${c.id}')">
+      <div class="list-avatar">🌸</div>
+      <div class="list-body">
+        <div class="list-name">${c.name}</div>
+        <div class="list-sub">${c.phone||'無電話'} ${c.birthday?'· 🎂'+c.birthday:''}</div>
+      </div>
+      <div class="list-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-outline btn-sm" onclick="openCustomerModal('${c.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+//  APPOINTMENTS
+// ═══════════════════════════════════════
+function statusBadge(s){
+  if(s==='已完成') return 'badge-green';
+  if(s==='已取消') return 'badge-red';
+  return 'badge-blue';
+}
+function openAppointmentModal(id){
+  document.getElementById('appt-modal-title').textContent = id ? '編輯預約' : '新增預約';
+  document.getElementById('appt-id').value='';
+  document.getElementById('appt-date').value=today();
+  document.getElementById('appt-time').value='10:00';
+  document.getElementById('appt-cust').value='';
+  document.getElementById('appt-service').value='';
+  document.getElementById('appt-status').value='已預約';
+  document.getElementById('appt-note').value='';
+  if(id){
+    const a=appointments.find(x=>x.id===id); if(!a) return;
+    document.getElementById('appt-id').value=a.id;
+    document.getElementById('appt-date').value=a.date;
+    document.getElementById('appt-time').value=a.time;
+    document.getElementById('appt-cust').value=a.customer;
+    document.getElementById('appt-service').value=a.service;
+    document.getElementById('appt-status').value=a.status;
+    document.getElementById('appt-note').value=a.note||'';
+  }
+  updateDataLists(); openModal('modal-appointment');
+}
+function saveAppointment(){
+  const date=document.getElementById('appt-date').value;
+  const cust=document.getElementById('appt-cust').value.trim();
+  const svc=document.getElementById('appt-service').value;
+  if(!date||!cust||!svc){toast('請填寫日期、客戶與服務項目');return;}
+  const id=document.getElementById('appt-id').value;
+  const obj={
+    id:id||uid(),date,
+    time:document.getElementById('appt-time').value,
+    customer:cust,service:svc,
+    status:document.getElementById('appt-status').value,
+    note:document.getElementById('appt-note').value
+  };
+  if(id) appointments=appointments.map(a=>a.id===id?obj:a);
+  else appointments.push(obj);
+  saveAll(); closeModal('modal-appointment'); renderAppointments();
+  toast(id?'✅ 預約已更新':'✅ 預約新增成功');
+}
+function deleteAppointment(id){
+  if(!confirm('確定刪除此預約？')) return;
+  appointments=appointments.filter(a=>a.id!==id);
+  saveAll(); renderAppointments(); toast('🗑 已刪除');
+}
+function renderAppointments(){
+  const q=(document.getElementById('appt-search')||{}).value?.toLowerCase()||'';
+  const list=appointments.filter(a=>
+    a.customer.toLowerCase().includes(q)||
+    a.service.toLowerCase().includes(q)||
+    a.date.includes(q)
+  ).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time));
+  const el=document.getElementById('appt-list');
+  if(!list.length){el.innerHTML='<div class="empty-state"><span class="emoji">📅</span><p>尚無預約<br>點擊 + 新增預約</p></div>';return;}
+  el.innerHTML=list.map(a=>`
+    <div class="list-item">
+      <div class="list-avatar">🗓</div>
+      <div class="list-body">
+        <div class="list-name">${a.customer}</div>
+        <div class="list-sub">${a.date} ${a.time} · ${a.service}</div>
+        ${a.note?`<div class="list-sub" style="color:#bbb">${a.note}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span class="badge ${statusBadge(a.status)}">${a.status}</span>
+        <div class="list-actions">
+          <button class="btn btn-outline btn-sm" onclick="openAppointmentModal('${a.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteAppointment('${a.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+//  PAYMENTS
+// ═══════════════════════════════════════
+function openPaymentModal(){
+  document.getElementById('pay-date').value=today();
+  document.getElementById('pay-cust').value='';
+  document.getElementById('pay-service').value='';
+  document.getElementById('pay-amount').value='';
+  document.getElementById('pay-note').value='';
+  updateDataLists(); openModal('modal-payment');
+}
+function autoFillPrice(){
+  const sel=document.getElementById('pay-service');
+  const opt=sel.options[sel.selectedIndex];
+  if(opt&&opt.dataset.price) document.getElementById('pay-amount').value=opt.dataset.price;
+}
+function savePayment(){
+  const date=document.getElementById('pay-date').value;
+  const cust=document.getElementById('pay-cust').value.trim();
+  const svc=document.getElementById('pay-service').value;
+  const amt=document.getElementById('pay-amount').value;
+  if(!date||!cust||!svc||!amt){toast('請填寫所有必填欄位');return;}
+  const obj={
+    id:uid(),date,customer:cust,service:svc,
+    amount:Number(amt),
+    note:document.getElementById('pay-note').value
+  };
+  payments.push(obj);
+  saveAll(); closeModal('modal-payment'); renderPayments();
+  toast('✅ 收款新增成功');
+}
+function deletePayment(id){
+  if(!confirm('確定刪除此收款紀錄？')) return;
+  payments=payments.filter(p=>p.id!==id);
+  saveAll(); renderPayments(); toast('🗑 已刪除');
+}
+function renderPayments(){
+  const q=(document.getElementById('pay-search')||{}).value?.toLowerCase()||'';
+  const list=payments.filter(p=>
+    p.customer.toLowerCase().includes(q)||
+    p.service.toLowerCase().includes(q)||
+    p.date.includes(q)
+  ).sort((a,b)=>b.date.localeCompare(a.date));
+  const el=document.getElementById('pay-list');
+  if(!list.length){el.innerHTML='<div class="empty-state"><span class="emoji">💳</span><p>尚無收款紀錄<br>點擊 + 新增收款</p></div>';return;}
+
+  // month totals
+  const tm=thisMonth();
+  const monthTotal=list.filter(p=>p.date.startsWith(tm)).reduce((s,p)=>s+Number(p.amount),0);
+
+  el.innerHTML=`<div class="profit-bar" style="margin-bottom:14px"><div class="p-label">本月收款</div><div class="p-val">${fmtMoney(monthTotal)}</div></div>`+
+  list.map(p=>`
+    <div class="list-item">
+      <div class="list-avatar">💰</div>
+      <div class="list-body">
+        <div class="list-name">${p.customer}</div>
+        <div class="list-sub">${p.date} · ${p.service}</div>
+        ${p.note?`<div class="list-sub" style="color:#bbb">${p.note}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div style="font-size:17px;font-weight:800;color:#2c7ed6">${fmtMoney(p.amount)}</div>
+        <button class="btn btn-danger btn-sm" onclick="deletePayment('${p.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+//  EXPENSES
+// ═══════════════════════════════════════
+const catIcon={'材料':'🧴','房租':'🏠','廣告':'📢','其他':'📦'};
+function openExpenseModal(){
+  document.getElementById('exp-date').value=today();
+  document.getElementById('exp-cat').value='材料';
+  document.getElementById('exp-amount').value='';
+  document.getElementById('exp-note').value='';
+  openModal('modal-expense');
+}
+function saveExpense(){
+  const date=document.getElementById('exp-date').value;
+  const amt=document.getElementById('exp-amount').value;
+  if(!date||!amt){toast('請填寫日期與金額');return;}
+  const obj={
+    id:uid(),date,
+    category:document.getElementById('exp-cat').value,
+    amount:Number(amt),
+    note:document.getElementById('exp-note').value
+  };
+  expenses.push(obj);
+  saveAll(); closeModal('modal-expense'); renderExpenses();
+  toast('✅ 支出新增成功');
+}
+function deleteExpense(id){
+  if(!confirm('確定刪除此支出？')) return;
+  expenses=expenses.filter(e=>e.id!==id);
+  saveAll(); renderExpenses(); toast('🗑 已刪除');
+}
+function renderExpenses(){
+  const q=(document.getElementById('exp-search')||{}).value?.toLowerCase()||'';
+  const list=expenses.filter(e=>
+    e.category.includes(q)||
+    (e.note||'').toLowerCase().includes(q)||
+    e.date.includes(q)
+  ).sort((a,b)=>b.date.localeCompare(a.date));
+  const el=document.getElementById('exp-list');
+  if(!list.length){el.innerHTML='<div class="empty-state"><span class="emoji">💸</span><p>尚無支出紀錄<br>點擊 + 新增支出</p></div>';return;}
+
+  const tm=thisMonth();
+  const monthTotal=list.filter(e=>e.date.startsWith(tm)).reduce((s,e)=>s+Number(e.amount),0);
+
+  el.innerHTML=`<div class="profit-bar" style="margin-bottom:14px"><div class="p-label">本月支出</div><div class="p-val" style="color:#d63b3b">${fmtMoney(monthTotal)}</div></div>`+
+  list.map(e=>`
+    <div class="list-item">
+      <div class="list-avatar">${catIcon[e.category]||'📦'}</div>
+      <div class="list-body">
+        <div class="list-name">${e.category}</div>
+        <div class="list-sub">${e.date}${e.note?' · '+e.note:''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div style="font-size:17px;font-weight:800;color:#d63b3b">${fmtMoney(e.amount)}</div>
+        <button class="btn btn-danger btn-sm" onclick="deleteExpense('${e.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+//  DATALISTS
+// ═══════════════════════════════════════
+function updateDataLists(){
+  const names=customers.map(c=>`<option value="${c.name}">`).join('');
+  document.getElementById('cust-datalist').innerHTML=names;
+  document.getElementById('cust-datalist2').innerHTML=names;
+}
+
+// ═══════════════════════════════════════
+//  EXPORT CSV
+// ═══════════════════════════════════════
+function exportCSV(type){
+  let rows=[], filename='';
+  if(type==='customers'){
+    filename='nuva_customers.csv';
+    rows=[['姓名','電話','LINE','生日','備註','建立日期']];
+    customers.forEach(c=>rows.push([c.name,c.phone,c.line,c.birthday,c.note,c.created]));
+  }else if(type==='appointments'){
+    filename='nuva_appointments.csv';
+    rows=[['日期','時間','客戶','服務','狀態','備註']];
+    appointments.forEach(a=>rows.push([a.date,a.time,a.customer,a.service,a.status,a.note]));
+  }else if(type==='payments'){
+    filename='nuva_payments.csv';
+    rows=[['日期','客戶','服務','金額','備註']];
+    payments.forEach(p=>rows.push([p.date,p.customer,p.service,p.amount,p.note]));
+  }else if(type==='expenses'){
+    filename='nuva_expenses.csv';
+    rows=[['日期','類別','金額','備註']];
+    expenses.forEach(e=>rows.push([e.date,e.category,e.amount,e.note]));
+  }
+  const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=filename; a.click();
+  toast('⬇ CSV 已匯出');
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+updateDataLists();
+renderDashboard();
+</script>
+</body>
+</html>
